@@ -1,0 +1,78 @@
+---
+title: Getting started
+description: From clone to a running local app — install, secrets, database, dev server, first sign-in.
+group: start
+order: 1
+---
+
+## Prerequisites
+
+- [Bun](https://bun.sh), the package manager the repo uses.
+- [Node.js](https://nodejs.org) 22 or newer (Wrangler and Vite run on it).
+- A Cloudflare account, only when you deploy. Local development needs none.
+
+The dev server runs your code in workerd, the same runtime Cloudflare uses in
+production, with a local D1 database and R2 bucket under `.wrangler/state`.
+
+## 1. Clone and install
+
+```bash
+git clone https://github.com/rice408s/tanstack-start-cloudflare-starter my-app
+cd my-app
+bun install
+bun run cf-typegen     # generates worker-configuration.d.ts, the Env types
+```
+
+## 2. Create `.dev.vars`
+
+```bash
+cp .dev.vars.example .dev.vars
+openssl rand -base64 32    # paste the output as BETTER_AUTH_SECRET
+```
+
+`BETTER_AUTH_SECRET` is the only required value. Everything else is optional:
+
+| Key | What it switches on |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | "Continue with Google" (redirect URI `<APP_URL>/api/auth/callback/google`) |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | "Continue with GitHub" (callback `<APP_URL>/api/auth/callback/github`) |
+| `RESEND_API_KEY` | Real email delivery for sign-in codes |
+
+Env is read at boot — restart the dev server after editing `.dev.vars`.
+
+## 3. Create the local database
+
+```bash
+bun run db:migrate:local
+```
+
+## 4. Start the dev server
+
+```bash
+bun run dev                # http://localhost:3000
+```
+
+The landing page, `/docs`, `/blog` and their Chinese versions under `/zh`
+render. `/dashboard` redirects to `/login` until you sign in.
+
+## 5. Sign in
+
+Sign-in is passwordless; the first sign-in creates the account.
+
+- **Emailed code** always works. Without `RESEND_API_KEY` the code is printed
+  to the dev server's terminal instead of being sent.
+- **Google** and **GitHub** buttons appear once their keys are set.
+
+## With an AI agent
+
+The repo ships rules (`CLAUDE.md`, `AGENTS.md`) and Claude Code skills:
+`/setup` runs the steps above for you, `/google-oauth` wires Google sign-in and
+`/deploy` puts the app on Cloudflare.
+
+## Next steps
+
+- Replace the placeholders in `src/config/app-config.ts` (name, URL, support
+  address, legal entity) and gut `src/config/landing.ts`.
+- When you are ready to go live, follow [Deploy](/docs/deploy).
+- Need payments, credits, an admin console, RBAC or API keys? They are in the
+  full version, [ShipKit](https://shipkit.sh).

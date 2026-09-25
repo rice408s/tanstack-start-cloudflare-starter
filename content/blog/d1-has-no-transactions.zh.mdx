@@ -1,0 +1,52 @@
+---
+title: "D1 没有交互式事务，那该怎么写"
+description: "在一个 db.transaction() 会直接抛错的数据库上安全地扣积分——一条条件语句，以及什么时候该用 batch()。"
+date: "2026-09-05"
+category: specs
+cover: blog-d1
+---
+
+Cloudflare D1 不支持交互式事务。`db.transaction()` 会在运行时抛错，再怎么配置 Drizzle 也改不了：这个限制来自平台本身，因为「跨多次往返一直开着的事务」恰恰是分布式 SQLite 给不了的东西。
+
+只要你手上有一个需要扣减的余额，这件事立刻就要紧起来。
+
+## 朴素写法，以及它为什么会亏钱
+
+```ts
+const { balance } = await db.select(...)   // 读
+if (balance < cost) throw new Error('余额不足')
+await db.update(...).set({ balance: balance - cost })   // 写
+```
+
+两个同时到达的请求会读到同一个余额，双双通过检查，然后双双写入。账户变成负数，而账本再也解释不清这是怎么发生的。
+
+## 正确做法：把检查塞进写操作里
+
+不要「读 → 判断 → 写」。改成条件写入，把判断交给数据库：
+
+```ts
+const spent = await db
+  .update(credits)
+  .set({ balance: sql`${credits.balance} - ${cost}` })
+  .where(and(eq(credits.userId, userId), gte(credits.balance, cost)))
+  .returning({ balance: credits.balance })
+
+if (!spent.length) throw new InsufficientCredits()
+```
+
+一条语句。`WHERE` 里的 `gte` 就是余额检查，因此它和更新在同一把锁下求值。返回零行意味着这次更新没有生效——调用方是从影响行数得知这一点的，而不是从之前的那次读取。
+
+## 一条语句不够用的时候
+
+扣减通常还要写一条账本记录，而你希望两者要么都成功、要么都不发生。这正是 `db.batch()` 的用途：多条语句、一次往返、原子生效。它不是交互式事务——你没法根据第一条语句的结果去分支——但对「这几条写操作必须同进同退」这种需求，它刚好合适。
+
+```ts
+await db.batch([
+  db.update(credits).set(...).where(...),
+  db.insert(ledger).values(...),
+])
+```
+
+## 经验法则
+
+如果一个判断依赖当前状态，就把这个判断推进 `WHERE` 子句。如果多条写操作必须一起落地，就用 `batch()`。如果你发现自己想要「先读、在 JavaScript 里分支、再写」——那正是 D1 给不了你的形状，值得在它变成一个只在高并发下才现形的 bug 之前先重构掉。

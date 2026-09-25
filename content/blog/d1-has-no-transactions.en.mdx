@@ -1,0 +1,68 @@
+---
+title: "D1 has no interactive transactions. Here is what to do instead."
+description: "Spending a credit balance safely on a database where db.transaction() throws — a single conditional statement, and when to reach for batch()."
+date: "2026-09-05"
+category: specs
+cover: blog-d1
+---
+
+Cloudflare D1 does not support interactive transactions. `db.transaction()`
+throws at runtime, and no amount of Drizzle configuration changes that: the
+constraint is in the platform, because a transaction that stays open across
+round trips is exactly what a distributed SQLite cannot offer.
+
+That matters the moment you have a balance to spend.
+
+## The naive version, and why it loses money
+
+```ts
+const { balance } = await db.select(...)   // read
+if (balance < cost) throw new Error('insufficient')
+await db.update(...).set({ balance: balance - cost })   // write
+```
+
+Two requests arriving together both read the same balance, both pass the
+check, and both write. The account goes negative, and the ledger no longer
+explains how.
+
+## The fix: make the check part of the write
+
+Do not read, decide, then write. Write conditionally, and let the database
+decide:
+
+```ts
+const spent = await db
+  .update(credits)
+  .set({ balance: sql`${credits.balance} - ${cost}` })
+  .where(and(eq(credits.userId, userId), gte(credits.balance, cost)))
+  .returning({ balance: credits.balance })
+
+if (!spent.length) throw new InsufficientCredits()
+```
+
+One statement. The `gte` in the `WHERE` is the balance check, so it is
+evaluated under the same lock as the update. Zero rows back means it did not
+apply — the caller learns that from the row count, not from a prior read.
+
+## When one statement is not enough
+
+Spending usually also writes a ledger row, and you want both or neither. That
+is what `db.batch()` is for: several statements, one round trip, applied
+atomically. It is not an interactive transaction — you cannot branch on the
+result of the first statement — but for "these writes go together" it is
+exactly right.
+
+```ts
+await db.batch([
+  db.update(credits).set(...).where(...),
+  db.insert(ledger).values(...),
+])
+```
+
+## The rule of thumb
+
+If a decision depends on current state, push the decision into the `WHERE`
+clause. If several writes must land together, use `batch()`. If you find
+yourself wanting to read, branch in JavaScript, and then write — that is the
+shape D1 cannot give you, and it is worth restructuring before it becomes a
+bug you only see under load.

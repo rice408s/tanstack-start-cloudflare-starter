@@ -1,0 +1,19 @@
+# Security headers for responses served straight from Cloudflare's asset layer
+# (prerendered marketing pages, /assets/*, fonts). Dynamic responses get the
+# same set from src/core/server/security-headers.ts — keep both in sync.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+# Vite fingerprints everything under /assets/, and the font files are
+# versioned by name, so neither ever changes at its URL. Without this the
+# asset layer answers `max-age=0, must-revalidate` and every repeat view
+# revalidates each chunk, the stylesheet and each woff2.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -1,0 +1,1065 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@import 'tw-animate-css';
+/* The alternate built-in looks. Every rule there is scoped to
+   :root[data-theme='...'], which outweighs the :root defaults below, so the
+   import order does not matter. See src/config/themes.ts. */
+@import './styles/themes.css';
+/* [feature: agent] start */
+/* [feature: agent] end */
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Manrope variable font (weights 200-800), self-hosted — no render-blocking
+ * request chain to fonts.googleapis.com (and it works behind the GFW).
+ */
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/manrope-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/manrope-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/*
+ * Instrument Serif italic — display accent only: a single italicized word
+ * inside a large marketing heading (never body text, never the app shell).
+ * Latin subset only; CJK falls through to the sans stack, which is fine —
+ * the accent trick is for English keywords.
+ */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Comfortaa bold — the wordmark ONLY (rounded geometric, made for the
+ * double-o). Never for headings or body text.
+ */
+/*
+ * Bricolage Grotesque, weight 500 with its full optical-size axis, latin
+ * subset, self-hosted. The hero slogan's face and nothing else's — see
+ * .display-sans. Preloaded from the marketing index route only.
+ */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/comfortaa-bold-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+.wordmark {
+  font-family: 'Comfortaa', var(--font-sans), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/*
+ * Neutral + blue (see /src/CLAUDE.md for the full design language,
+ * user-confirmed 2026-09-15). Three layers, and nothing may cross between
+ * them:
+ *
+ *   1. GROUND — black, white and grey. TEXT is always pure neutral (chroma
+ *      0, no hue residue at all). The page's own planes may carry a whisper
+ *      of warmth — `--band` does in the dark theme, at chroma 0.008 on hue
+ *      80, which is what makes it read as paper rather than as a screen
+ *      dimmed. In the light theme it carries none: it is white. Everything
+ *      else — cards, borders, secondary fills — stays at chroma 0. Contrast
+ *      does the work; no plane is ever black.
+ *   2. BRAND — one blue. A FILL under near-white text, never a text colour:
+ *      primary calls to action, the focus ring, the selected state.
+ *   3. SIGNAL — status and category fills (success / warning / danger) and
+ *      the chart ramp. These exist to MEAN something — a state, a series, a
+ *      category — and are the only other colour on the page. Never
+ *      decoration, never a section background, never a gradient.
+ *
+ * Every text/background pair below holds WCAG AA (>= 4.5:1), and every fill
+ * is inside the sRGB gamut; both verified by calculation (OKLCH -> linear
+ * sRGB -> relative luminance), not by eye. Re-run that math before changing
+ * any value here.
+ *
+ * Third-party brand marks are the one exception to all of the above: they
+ * render in their own colour (src/components/marketing/stack-icons.ts).
+ */
+:root {
+  /* Light ground: paper white down to near-black ink, every step chroma 0.
+     Cards sit ABOVE the page in lightness, the way paper stacks. */
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.18 0 0);
+  --card: oklch(0.975 0 0);
+  --card-foreground: oklch(0.18 0 0);
+  --popover: oklch(0.99 0 0);
+  --popover-foreground: oklch(0.18 0 0);
+  /* The default button is monochrome: ink here, near-white in .dark. Brand
+     is the exception, not the default. */
+  --primary: oklch(0.18 0 0);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0 0);
+  --secondary-foreground: oklch(0.18 0 0);
+  --muted: oklch(0.94 0 0);
+  /* 5.03:1 on --secondary, the tightest ground it ever lands on. */
+  --muted-foreground: oklch(0.5 0 0);
+  /* Input placeholder: lighter than --muted-foreground and deliberately
+     sub-AA — transitional text, not content. */
+  --placeholder: oklch(0.65 0 0);
+  --accent: oklch(0.94 0 0);
+  --accent-foreground: oklch(0.18 0 0);
+  --destructive: oklch(0.53 0.19 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.54 0.17 255);
+  /* THE BRAND. White text on it lands at 4.99:1. Hue 255 at chroma 0.17 is
+     comfortably inside sRGB — the gamut ceiling there is 0.177. */
+  --brand: oklch(0.54 0.17 255);
+  --brand-foreground: oklch(0.99 0 0);
+  --surface: oklch(0.955 0 0);
+  /* SIGNAL. Status fills, each carrying near-white text: 5.05 / 5.23 / 5.66.
+     Warning is capped at chroma 0.105 because hue 75 leaves sRGB at 0.109. */
+  --success: oklch(0.52 0.125 150);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.53 0.105 75);
+  --warning-foreground: oklch(0.99 0 0);
+  --danger: oklch(0.53 0.19 25);
+  --danger-foreground: oklch(0.99 0 0);
+  /* Ground behind images and video. Dark in BOTH themes — media is judged
+     against a constant, not against the UI — which is why it has no .dark
+     override and needs its own text pair. */
+  --media: oklch(0.16 0 0);
+  --media-foreground: oklch(0.97 0 0);
+  --media-muted: oklch(0.72 0 0);
+  /* The landing page's two departures from the plain page.
+
+     --hero-dot draws the first screen's dot grid (see .hero-dots below); the
+     ground there stays the page's own white, so the texture is the only
+     thing marking it out.
+
+     --band is the centrepiece's full-bleed plane, and in the light theme it
+     is now simply WHITE — pure 1.0 against a 0.99 page, which is a step you
+     can measure (1.03:1) and not one you can see. That is the end of a walk
+     down: near-black first, which read as a different SITE rather than a
+     different section; then 0.94; then 0.96 warm; now none of it. Four
+     screens is long enough that ANY tint stops being an accent and becomes
+     the page, so the block is marked out by what is on it — four
+     screen-sized shots of the product — rather than by what is behind it.
+     The token stays because the dark theme still needs a real plane there,
+     and because a landing page that wants its band back changes one line.
+     Text on it is the page's own ink and grey (18.8:1 and 6.0:1). */
+  --hero-dot: oklch(0.88 0 0);
+  --band: oklch(1 0 0);
+  --band-foreground: oklch(0.18 0 0);
+  --band-muted: oklch(0.5 0 0);
+  /* The shell block on marketing pages. Dark on both grounds, but one step
+     off pure black with text pulled off pure white, so it reads as a raised
+     surface rather than a hole punched in the page. */
+  --terminal: oklch(0.22 0 0);
+  --terminal-foreground: oklch(0.92 0 0);
+  --terminal-muted: oklch(0.7 0 0);
+  /* The hairline around a typed prompt in a shell block — an input's edge,
+     which rule 9 allows. */
+  --terminal-line: oklch(0.4 0 0);
+  /* The chart ramp: five hues that separate from each other AND from both
+     grounds. Series colour, never page decoration. */
+  --chart-1: oklch(0.54 0.17 255);
+  --chart-2: oklch(0.55 0.13 150);
+  --chart-3: oklch(0.6 0.11 75);
+  --chart-4: oklch(0.55 0.19 25);
+  --chart-5: oklch(0.52 0.16 310);
+  --radius: 0.625rem;
+  /* SHAPE AND TEXTURE. The colour tokens above differ between light and dark;
+     these do not — they belong to the THEME, not the mode, so they are set
+     once here and overridden once per theme in styles/themes.css.
+
+     --radius already reaches every `rounded-sm/md/lg/xl` through @theme
+     inline below. The two corners it could not reach were hardcoded: the
+     pill button and the card's 1rem. They are tokens now, so a theme that
+     wants square buttons says so in one line instead of editing 29 files. */
+  --radius-btn: 9999px;
+  --radius-card: 1rem;
+  /* The marketing section "sheet" — the widest corner on the site. */
+  --radius-sheet: 1.5rem;
+  /* Surface texture. Both default to `none`: the shipkit look has no shadows
+     at all (design rule 9), and these exist so a theme that is BUILT on
+     shadow — the brutal one's hard offset — can have them without any
+     component gaining a shadow class. */
+  --shadow-surface: none;
+  --shadow-raised: none;
+  /* Type. --font-body is what the `font-sans` utility resolves to (see
+     @theme inline); --font-display is the marketing headline face. Naming
+     them apart from Tailwind's --font-sans is what lets a theme reassign
+     them — @theme's own variables are generated, not overridable. */
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', var(--font-body), sans-serif;
+  --sidebar: oklch(0.975 0 0);
+  --sidebar-foreground: oklch(0.18 0 0);
+  --sidebar-primary: oklch(0.18 0 0);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.94 0 0);
+  --sidebar-accent-foreground: oklch(0.18 0 0);
+  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-ring: oklch(0.54 0.17 255);
+}
+
+.dark {
+  /* Dark ground: the same neutral ladder inverted, still chroma 0. Raised
+     surfaces are LIGHTER than the page here too, so "raised is lighter"
+     holds in both themes. */
+  --background: oklch(0.16 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.2 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.2 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.16 0 0);
+  --secondary: oklch(0.27 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.27 0 0);
+  --muted-foreground: oklch(0.72 0 0);
+  --placeholder: oklch(0.52 0 0);
+  --accent: oklch(0.3 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.54 0.19 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.32 0 0);
+  --input: oklch(0.32 0 0);
+  --ring: oklch(0.55 0.175 255);
+  /* Lifted a step so the fill separates from the darker page (3.94:1) while
+     white text on it still holds 4.78:1. */
+  --brand: oklch(0.55 0.175 255);
+  --brand-foreground: oklch(0.99 0 0);
+  --surface: oklch(0.225 0 0);
+  --success: oklch(0.51 0.125 150);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.52 0.105 75);
+  --warning-foreground: oklch(0.99 0 0);
+  --danger: oklch(0.54 0.19 25);
+  --danger-foreground: oklch(0.99 0 0);
+  --hero-dot: oklch(0.3 0 0);
+  /* The dark theme keeps a plane: white is not available to it, and a raised
+     surface is what tells the eye this block is not the page. */
+  --band: oklch(0.235 0.008 80);
+  --band-foreground: oklch(0.97 0 0);
+  --band-muted: oklch(0.72 0 0);
+  /* One step above --surface (0.225), not level with it: at 0.225 a shell
+     block on a `sheet` section (the landing steps) had no edge at all.
+     Muted text 0.7 on 0.285 is 5.37:1, foreground 0.92 is 11.3:1. */
+  --terminal: oklch(0.285 0 0);
+  --terminal-foreground: oklch(0.92 0 0);
+  --terminal-muted: oklch(0.7 0 0);
+  --terminal-line: oklch(0.46 0 0);
+  --chart-1: oklch(0.62 0.16 255);
+  --chart-2: oklch(0.65 0.13 150);
+  --chart-3: oklch(0.72 0.12 75);
+  --chart-4: oklch(0.62 0.18 25);
+  --chart-5: oklch(0.6 0.16 310);
+  --sidebar: oklch(0.2 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.97 0 0);
+  --sidebar-primary-foreground: oklch(0.16 0 0);
+  --sidebar-accent: oklch(0.3 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(0.32 0 0);
+  --sidebar-ring: oklch(0.55 0.175 255);
+}
+
+@theme inline {
+  --font-sans: var(--font-body);
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-placeholder: var(--placeholder);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-surface: var(--surface);
+  --color-media: var(--media);
+  --color-media-foreground: var(--media-foreground);
+  --color-band: var(--band);
+  --color-band-foreground: var(--band-foreground);
+  --color-band-muted: var(--band-muted);
+  --color-media-muted: var(--media-muted);
+  --color-terminal: var(--terminal);
+  --color-terminal-foreground: var(--terminal-foreground);
+  --color-terminal-muted: var(--terminal-muted);
+  --color-terminal-line: var(--terminal-line);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+  /* Tailwind's own 2xl/3xl are 1rem/1.5rem, the values these two tokens
+     carry by default — so naming them here changes nothing for the shipkit
+     look while handing every `rounded-2xl` card and `rounded-3xl` sheet on
+     the site to the theme. That is the whole reason no component had to
+     learn about themes to change shape. */
+  --radius-2xl: var(--radius-card);
+  --radius-3xl: var(--radius-sheet);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+/*
+ * Selection is the brand's job (design rule 3: the brand blue is the fill
+ * for the primary action, the focus ring and the SELECTED state). It used to
+ * be `--primary`, which is ink — near-black on near-white, i.e. the page's
+ * own colours merely swapped. That reads as a rendering glitch rather than a
+ * selection, and over the warm mat it barely registered at all. Blue is the
+ * one colour on the page that means "this is picked", and it holds 4.99:1
+ * against its own foreground in both themes.
+ */
+::selection {
+  background: var(--brand);
+  color: var(--brand-foreground);
+  /* Safari keeps -webkit-text-fill-color over ::selection's `color` wherever
+     an element sets one; naming it here means the highlight is legible even
+     on type that does. */
+  -webkit-text-fill-color: var(--brand-foreground);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Scrollbars: thin, square, theme-aware — same restraint as the rest of
+ * the design. Standard properties cover Chrome 121+/Firefox; the -webkit-
+ * rules below are the Safari fallback (ignored where the standard applies).
+ */
+html {
+  /* Reserve the gutter so the layout doesn't shift between short and long pages. */
+  scrollbar-gutter: stable;
+}
+
+/*
+ * Radix Select/Dialog (react-remove-scroll) lock the page by hiding the body
+ * scrollbar and adding a compensating margin — with the gutter already
+ * reserved above that compensation is a visible jump. Undo the CSS half of
+ * the lock; wheel/touch scrolling is still blocked by its JS listeners.
+ */
+html body[data-scroll-locked] {
+  overflow: visible !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* [feature: agent] start */
+/*
+ * Generating-media placeholders: a soft light band sweeps the tinted block
+ * left to right — reads as lighting, not decoration, so it stays inside the
+ * no-gradient rule. Light mode sweeps a slightly deeper tint (the base is
+ * already near-white); dark mode a faint white sheen.
+ */
+.shimmer {
+  --shimmer-highlight: oklch(1 0 0 / 0.6);
+  background-image: linear-gradient(
+    105deg,
+    transparent 40%,
+    var(--shimmer-highlight) 50%,
+    transparent 60%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer-sweep 2.4s ease-in-out infinite;
+}
+
+.dark .shimmer {
+  --shimmer-highlight: oklch(1 0 0 / 0.06);
+}
+
+/* background-size is 200%, so position 100% → band off the left edge,
+   -100% → off the right: one full left-to-right pass per cycle. */
+@keyframes shimmer-sweep {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/*
+ * In-progress label sweep (thinking / running tool calls): the highlight
+ * moves through the text itself via background-clip, no dots or spinners.
+ * Monochrome only — gray base, ink highlight — so it stays inside the
+ * text-is-only-black/white/gray rule.
+ */
+.text-shimmer {
+  color: transparent;
+  /* Two layers: a moving ink highlight band on top of a constant gray
+     underlay — the text never blanks out at the sweep's extremes. */
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent 38%,
+      var(--foreground) 50%,
+      transparent 62%
+    ),
+    linear-gradient(var(--muted-foreground), var(--muted-foreground));
+  background-size:
+    200% 100%,
+    100% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: text-shimmer-sweep 1.6s linear infinite;
+}
+
+@keyframes text-shimmer-sweep {
+  from {
+    background-position:
+      100% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      -100% 0,
+      0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .text-shimmer {
+    color: var(--muted-foreground);
+    background: none;
+    animation: none;
+  }
+}
+
+/*
+ * Gooey loader (css-loaders.com #12 adapted): four dots orbit the corners
+ * and merge with a center square. The original fuses blobs with
+ * `filter: blur() contrast()`, which needs a solid two-tone ground — on our
+ * tinted cards that leaves a hard color square. The SVG filter the component
+ * pairs this with (GooLoader) raises contrast on the alpha channel only, so
+ * the melt works over any background. Dots draw in currentColor.
+ */
+.goo-loader {
+  width: 48px;
+  aspect-ratio: 1;
+  border: 6px solid #0000;
+  box-sizing: border-box;
+  background:
+    radial-gradient(farthest-side, currentColor 98%, #0000) 0 0 / 12px 12px,
+    radial-gradient(farthest-side, currentColor 98%, #0000) 100% 0 / 12px 12px,
+    radial-gradient(farthest-side, currentColor 98%, #0000) 100% 100% / 12px
+      12px,
+    radial-gradient(farthest-side, currentColor 98%, #0000) 0 100% / 12px 12px,
+    linear-gradient(currentColor 0 0) 50% / 24px 24px;
+  background-repeat: no-repeat;
+  animation: goo-orbit 0.9s infinite;
+}
+
+@keyframes goo-orbit {
+  100% {
+    background-position:
+      100% 0,
+      100% 100%,
+      0 100%,
+      0 0,
+      center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goo-loader {
+    animation: none;
+  }
+}
+
+/*
+ * Wave text (css-loaders.com #20 in spirit): the running indicator's
+ * characters hop up one after another. The original hardcodes ten
+ * text-shadows to a ten-character string; per-character spans with staggered
+ * animation-delay (set inline) give the same wave over any localized text.
+ */
+.wave-char {
+  display: inline-block;
+  animation: wave-hop 1.6s ease-in-out infinite;
+}
+
+@keyframes wave-hop {
+  0%,
+  16%,
+  100% {
+    transform: none;
+  }
+  8% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-char {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/*
+ * Streamdown's image download control ships as a bordered, blurred, shadowed
+ * square — too busy for our look. Quiet dark round chip instead, and drop the
+ * hover darkening overlay entirely.
+ */
+
+
+
+/*
+ * Code blocks: shiki inlines the theme's pure-white background, and the
+ * container reserves a blank 200px box via content-visibility while
+ * offscreen — both flash as white "mask" rectangles on our tinted page.
+ * Paint them with the design tokens and render eagerly (chat-sized code
+ * doesn't need the virtualization).
+ */
+
+
+/*
+ * Tables and mermaid diagrams: Streamdown wraps both in near-white
+ * bg-sidebar cards (the table itself adds bg-background on top). While a
+ * reply streams, a stray "|" line renders as a transient table for a frame —
+ * on the tinted page that flashed as a white "mask" rectangle. Paint the
+ * whole family with the design tokens so even transient blocks blend in.
+ */
+
+
+/* The floating action chips inside those cards share the same near-white. */
+/* [feature: agent] end */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  /* Transparent edge + content-box clip = a slim thumb floating in the gutter. */
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+
+/*
+ * The landing page's first screen: the page's own white, with a drawing-paper
+ * dot grid over it.
+ *
+ * The grid is one repeating radial-gradient — no asset, no SVG, one paint —
+ * and it is masked to fade out before the edges so it never collides with the
+ * sticky header above or the section below. The mask has to live on a
+ * pseudo-element: put it on the container and it would fade the hero's own
+ * text out with it.
+ *
+ * `isolation: isolate` keeps the z-index:-1 layer inside this element, so it
+ * sits behind the hero content and in front of the page background without
+ * any of the children needing to opt in.
+ */
+.hero-dots {
+  position: relative;
+  isolation: isolate;
+}
+.hero-dots::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(var(--hero-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(
+    ellipse 75% 60% at 50% 45%,
+    #000 30%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 75% 60% at 50% 45%,
+    #000 30%,
+    transparent 100%
+  );
+}
+
+/* Small uppercase section label, the structural voice of the design. */
+.kicker {
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/*
+ * Serif italic accent word inside a large marketing heading (Fixa-style).
+ * Display use only — one or two words in a hero/section headline, never
+ * body text or app-shell UI. Slightly oversized because Instrument Serif
+ * runs visually smaller than Manrope at the same em.
+ */
+/*
+ * The hero slogan's own face: a display grotesk with real optical sizing,
+ * so at 96px it gets the tight apertures and short extenders a text face
+ * never grows into. Slogan only — section headings stay Manrope. Chinese
+ * falls through to the sans stack; the file carries latin alone.
+ */
+.display-sans {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.display-serif {
+  font-family: 'Instrument Serif', ui-serif, Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.04em;
+  letter-spacing: 0;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* A TOC jump lands the heading below the sticky header, not under it. */
+.prose :where(h2, h3)[id] {
+  scroll-margin-top: 6rem;
+}
+
+/* Frames in prose take the same corner as every other frame on the site;
+   a portrait frame is capped so it does not swallow the column. */
+.prose img {
+  border-radius: var(--radius-card);
+  max-height: 36rem;
+  width: auto;
+}
+
+.prose code:not(pre code) {
+  background: var(--muted);
+  padding: 0.125rem 0.375rem;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+.prose pre {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: oklch(0.2 0 0);
+}
+
+/*
+ * Marketing motion (jitter.video-inspired). Movement only — translate,
+ * opacity, scale; never color. Entrance flavors:
+ *   .appear       — fade + rise, for text blocks and cards
+ *   .appear-pop   — scale pop, for logos/small chips
+ *   .appear-mask  — a heading rises out of a clipped line, editorial-style.
+ *                   Put it on the wrapper; the child does the moving.
+ *   .appear-wipe  — an image is uncovered bottom-to-top while its picture
+ *                   settles from a slight zoom. For frames.
+ *   .appear-slide — slides in sideways, from the left by default; set
+ *                   --slide-from (e.g. 48px, or 100vw for off-screen) to
+ *   .appear-glide — .appear-slide without the fade, for the block that holds
+ *                   the fold's largest image: an element at opacity 0 is not
+ *                   painted as far as LCP is concerned, so a fade there
+ *                   pushes the metric back by its whole duration.
+ *                   come in from the right.
+ * Stagger by setting --appear-delay inline (e.g. style={{'--appear-delay':'120ms'}}).
+ * Elements start hidden. `.in` (set by the in-view hook) transitions them
+ * in and stays as the reader scrolls on; scrolling back up past a section
+ * drops it, which transitions them out — quicker, and without the stagger —
+ * so the page rewinds and replays only in that direction. Inside an
+ * `.appear-now` parent (load-time, no observer) the entrance runs once as a
+ * keyframe animation instead.
+ */
+.appear,
+.appear-pop,
+.appear-slide,
+.appear-mask > *,
+.appear-wipe,
+.appear-wipe img {
+  transition-duration: 0.7s;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--appear-delay, 0ms);
+}
+.appear:not(.in),
+.appear-pop:not(.in),
+.appear-slide:not(.in),
+.appear-mask:not(.in) > *,
+.appear-wipe:not(.in),
+.appear-wipe:not(.in) img {
+  transition-duration: 0.45s;
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  transition-delay: 0ms;
+}
+
+.appear {
+  opacity: 0;
+  transform: translateY(24px);
+  transition-property: opacity, transform;
+}
+.appear.in {
+  opacity: 1;
+  transform: none;
+}
+
+.appear-pop {
+  opacity: 0;
+  transform: scale(0.6);
+  transition-property: opacity, transform;
+}
+.appear-pop.in {
+  opacity: 1;
+  transform: none;
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-duration: 0.55s;
+}
+
+.appear-slide {
+  opacity: 0;
+  transform: translateX(var(--slide-from, -28px));
+  transition-property: opacity, transform;
+}
+.appear-slide.in {
+  opacity: 1;
+  transform: none;
+}
+
+.appear-glide {
+  transform: translateX(var(--slide-from, -28px));
+  transition-property: transform;
+  transition-duration: 0.7s;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.appear-glide.in {
+  transform: none;
+}
+
+.appear-mask {
+  overflow: hidden;
+}
+.appear-mask > * {
+  transform: translateY(110%);
+  transition-property: transform;
+  transition-duration: 0.9s;
+}
+.appear-mask.in > * {
+  transform: none;
+}
+
+.appear-wipe {
+  clip-path: inset(100% 0 0 0);
+  transition-property: clip-path;
+  transition-duration: 0.9s;
+}
+.appear-wipe.in {
+  clip-path: inset(0 0 0 0);
+}
+/* The picture settles from a slight zoom; the zoomed state lives on the
+   not-yet-in selector so a hover zoom still owns transform once settled. */
+.appear-wipe img {
+  transition-property: transform;
+  transition-duration: 1.4s;
+}
+.appear-wipe:not(.in) img {
+  transform: scale(1.1);
+}
+
+/* Load-time entrances (no observer): the same shapes as one-shot keyframes. */
+.appear-now .appear {
+  animation: appear-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--appear-delay, 0ms);
+}
+.appear-now .appear-pop {
+  animation: appear-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--appear-delay, 0ms);
+}
+.appear-now .appear-slide {
+  animation: appear-slide 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--appear-delay, 0ms);
+}
+.appear-now .appear-glide {
+  animation: appear-glide 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.appear-now .appear-mask > * {
+  animation: appear-mask-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--appear-delay, 0ms);
+}
+.appear-now .appear-wipe {
+  animation: appear-wipe 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--appear-delay, 0ms);
+}
+.appear-now .appear-wipe img {
+  animation: appear-settle 1.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: var(--appear-delay, 0ms);
+}
+@keyframes appear-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes appear-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes appear-slide {
+  from {
+    opacity: 0;
+    transform: translateX(var(--slide-from, -28px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes appear-glide {
+  from {
+    transform: translateX(var(--slide-from, -28px));
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes appear-mask-rise {
+  to {
+    transform: none;
+  }
+}
+@keyframes appear-wipe {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes appear-settle {
+  from {
+    transform: scale(1.1);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* Hero showcase: the typing caret and the story-style progress segment. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--foreground);
+  animation: caret-blink 1s steps(2, start) infinite;
+}
+@keyframes caret-blink {
+  to {
+    visibility: hidden;
+  }
+}
+.segment-fill {
+  width: 100%;
+  transform-origin: left;
+  animation: segment-fill var(--segment-ms, 6000ms) linear both;
+}
+@keyframes segment-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Disclosures (<details class="fold">): the panel's height tweens open and
+   closed where the browser can interpolate to `auto` (Chromium); elsewhere
+   it snaps. The marketing FAQ adds a rise on its answer. */
+@supports (interpolate-size: allow-keywords) {
+  .fold {
+    interpolate-size: allow-keywords;
+  }
+  .fold::details-content {
+    height: 0;
+    overflow: clip;
+    transition:
+      height 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      content-visibility 0.4s allow-discrete;
+  }
+  .fold[open]::details-content {
+    height: auto;
+  }
+}
+.faq[open] .faq-answer {
+  animation: appear-rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Infinite marquee: the track holds the list twice; one list-width per loop. */
+.marquee {
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll var(--marquee-duration, 40s) linear infinite;
+}
+
+.marquee-reverse {
+  animation-direction: reverse;
+}
+
+.marquee:hover .marquee-track,
+.marquee[data-paused='true'] .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appear,
+  .appear-pop,
+  .appear-slide,
+  .appear-glide,
+  .appear-mask > *,
+  .appear-wipe,
+  .appear-wipe img {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+    animation: none !important;
+    transition: none !important;
+  }
+  .fold::details-content {
+    transition: none;
+  }
+  .caret {
+    animation: none;
+  }
+  .segment-fill {
+    animation: none;
+    transform: none;
+  }
+  .faq[open] .faq-answer {
+    animation: none;
+  }
+  .marquee-track {
+    animation: none;
+  }
+  .marquee {
+    overflow-x: auto;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}

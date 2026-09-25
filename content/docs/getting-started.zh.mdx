@@ -1,0 +1,71 @@
+---
+title: 快速开始
+description: 从克隆到本地跑起来：安装、密钥、数据库、开发服务器、第一次登录。
+group: start
+order: 1
+---
+
+## 准备
+
+- [Bun](https://bun.sh)，本仓库使用的包管理器。
+- [Node.js](https://nodejs.org) 22 或更新版本（Wrangler 和 Vite 依赖它）。
+- Cloudflare 账号，只有部署时才需要，本地开发不用。
+
+开发服务器在 workerd 里运行代码，和 Cloudflare 生产环境是同一个运行时；本地的 D1 数据库和 R2 存储桶都放在 `.wrangler/state` 下。
+
+## 1. 克隆并安装
+
+```bash
+git clone https://github.com/rice408s/tanstack-start-cloudflare-starter my-app
+cd my-app
+bun install
+bun run cf-typegen     # 生成 worker-configuration.d.ts（Env 类型）
+```
+
+## 2. 创建 `.dev.vars`
+
+```bash
+cp .dev.vars.example .dev.vars
+openssl rand -base64 32    # 把输出填到 BETTER_AUTH_SECRET
+```
+
+只有 `BETTER_AUTH_SECRET` 是必填的，其他都可选：
+
+| 变量 | 作用 |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | 显示"使用 Google 登录"（回调地址 `<APP_URL>/api/auth/callback/google`） |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | 显示"使用 GitHub 登录"（回调地址 `<APP_URL>/api/auth/callback/github`） |
+| `RESEND_API_KEY` | 真正发送登录验证码邮件 |
+
+环境变量在启动时读取，改完 `.dev.vars` 要重启开发服务器。
+
+## 3. 创建本地数据库
+
+```bash
+bun run db:migrate:local
+```
+
+## 4. 启动开发服务器
+
+```bash
+bun run dev                # http://localhost:3000
+```
+
+首页、`/docs`、`/blog` 以及 `/zh` 下的中文版都能打开。没登录时访问 `/dashboard` 会跳到 `/login`。
+
+## 5. 登录
+
+登录不需要密码，第一次登录会自动创建账号。
+
+- **邮箱验证码**始终可用。没有 `RESEND_API_KEY` 时，验证码不会真的发出，而是打印在开发服务器的终端里。
+- 配好对应的密钥后，才会出现 **Google** 和 **GitHub** 按钮。
+
+## 配合 AI agent 使用
+
+仓库自带规则文件（`CLAUDE.md`、`AGENTS.md`）和 Claude Code skills：`/setup` 帮你跑完上面的步骤，`/google-oauth` 配置 Google 登录，`/deploy` 部署到 Cloudflare。
+
+## 下一步
+
+- 替换 `src/config/app-config.ts` 里的占位内容（名称、网址、客服邮箱、法律主体），并按需改写 `src/config/landing.ts`。
+- 准备上线时，照着[部署](/docs/deploy)操作。
+- 需要支付、积分、管理后台、角色权限或 API key？这些在完整版 [ShipKit](https://shipkit.sh) 里。

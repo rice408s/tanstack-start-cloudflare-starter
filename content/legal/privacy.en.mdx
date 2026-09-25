@@ -1,0 +1,52 @@
+---
+title: Privacy Policy
+updated: 2026-09-08
+---
+
+import { appConfig } from '@/config/app-config'
+
+{/* Template text — have a lawyer review before you rely on it. */}
+
+This policy explains what {appConfig.name} collects, why, and what you can do about it.
+
+## Who is responsible
+
+The data controller for the personal data described here is
+{appConfig.legalEntity.name}, a limited liability company organized in
+{appConfig.legalEntity.jurisdiction}:
+
+<pre>{`${appConfig.legalEntity.name}
+${appConfig.legalEntity.address.join('\n')}`}</pre>
+
+We have not appointed an EU or UK representative. Data protection questions go
+to {appConfig.supportEmail}.
+
+## What we collect
+
+- **Account data** — when you sign in (emailed code, Google or GitHub) we receive your email address, plus the name and profile picture a Google or GitHub account provides. We store these plus your language preference.
+- **Usage data** — what the Service needs to run for you, such as your sessions and the profile photo you upload.
+- **Technical data** — standard server logs (IP address, browser, timestamps) kept briefly for security and debugging.
+
+## Why we use it
+
+To provide the Service, send transactional email (such as sign-in codes), keep the Service secure, and comply with law. We do not sell your data and do not use it for advertising.
+
+## Cookies
+
+We use only cookies the Service needs to work: a session cookie to keep you signed in, and small preference cookies for language and theme. No advertising cookies.
+
+## Where it lives and who sees it
+
+Data is stored on Cloudflare's infrastructure. It is shared only with the providers required to run the Service — Google and GitHub (sign-in) and our email provider (transactional email) — each under their own privacy terms.
+
+## Retention and deletion
+
+We keep your data while your account exists. Deleting your account from Settings permanently removes your profile and sessions from our systems.
+
+## Your rights
+
+Depending on where you live you may have rights to access, correct, export or erase your data, or to object to processing. You can do most of this yourself in Settings; for anything else, email us and we will respond within 30 days.
+
+## Changes and contact
+
+We will announce material changes to this policy before they take effect. Questions: {appConfig.supportEmail}.

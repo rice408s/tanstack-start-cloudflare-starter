@@ -1,0 +1,49 @@
+---
+title: Terms of Service
+updated: 2026-09-01
+---
+
+import { appConfig } from '@/config/app-config'
+
+{/* Template text — have a lawyer review before you rely on it. */}
+
+These terms govern your use of {appConfig.name} (the "Service"), operated by
+{appConfig.legalEntity.name}, a limited liability company organized in
+{appConfig.legalEntity.jurisdiction}. By creating an account or using the Service
+you agree to them.
+
+## 1. Accounts
+
+You sign in with an emailed code, or with a Google or GitHub account. You are responsible for activity under your account and for keeping access to it secure. You must be at least 16 years old (or the age of digital consent where you live) to use the Service.
+
+## 2. Acceptable use
+
+Do not use the Service to break the law, infringe others' rights, send spam, probe or overload our systems, or resell access without permission. We may suspend or terminate accounts that do.
+
+## 3. Your content
+
+You keep ownership of anything you upload. You grant us the rights needed to store, process and display it in order to run the Service for you, and nothing more.
+
+## 4. Termination
+
+You can delete your account at any time from Settings; this permanently removes your data from our systems. We may close accounts that violate these terms, and may discontinue the Service with reasonable notice.
+
+## 5. Disclaimer and liability
+
+The Service is provided "as is". To the extent permitted by law we exclude implied warranties and are not liable for indirect or consequential losses. Our total liability to you is limited to the amount you paid us in the twelve months before the claim.
+
+## 6. Changes
+
+We may update these terms. Material changes will be announced in the app or by email before they take effect; continued use after that means you accept them.
+
+## 7. Governing law
+
+These terms are governed by the laws of the State of Wyoming, United States,
+without regard to its conflict of law rules.
+
+## 8. Contact
+
+Questions about these terms: {appConfig.supportEmail}.
+
+<pre>{`${appConfig.legalEntity.name}
+${appConfig.legalEntity.address.join('\n')}`}</pre>

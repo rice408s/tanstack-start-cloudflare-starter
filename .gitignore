@@ -1,0 +1,28 @@
+node_modules
+.DS_Store
+dist
+dist-ssr
+*.local
+.env
+.nitro
+.tanstack
+# Secrets and local state never belong in git: .dev.vars.example is the
+# key list, production keys go to the Worker with `wrangler secret put`.
+.dev.vars
+.prod.vars
+.wrangler
+.output
+.vinxi
+__unconfig*
+todos.json
+
+worker-configuration.d.ts
+
+.content-collections
+
+e2e/.auth
+playwright-report
+test-results
+
+# Stale worktrees from agent sessions — never part of the repo.
+.claude/worktrees/

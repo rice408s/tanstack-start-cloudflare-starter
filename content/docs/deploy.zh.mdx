@@ -1,0 +1,48 @@
+---
+title: 部署
+description: 部署到 Cloudflare Workers：创建 D1 和 R2、上传密钥、迁移数据库、部署、绑定域名。
+group: start
+order: 2
+---
+
+整个应用就是一个 Cloudflare Worker：预渲染的营销页作为静态资源提供，其余请求由 Worker 处理。用 Claude Code 的话，`/deploy` skill 会帮你跑完下面的步骤。
+
+## 1. 登录并创建资源
+
+```bash
+bunx wrangler login
+bunx wrangler d1 create my-app            # 把输出的 id 填到 wrangler.jsonc 的 database_id
+bunx wrangler r2 bucket create my-app-files
+```
+
+想用别的名字的话，先改 `wrangler.jsonc` 里的 `my-app`（Worker 的 `name`、`database_name`、`bucket_name`）。
+
+## 2. 上传密钥
+
+生产环境的密钥不要写进任何会提交的文件：
+
+```bash
+bunx wrangler secret put BETTER_AUTH_SECRET   # 新生成一个随机值，不要用本地那个
+bunx wrangler secret put APP_URL              # https://your-domain.com
+```
+
+可选的密钥用同样的方式添加：`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`、`GITHUB_CLIENT_ID`、`GITHUB_CLIENT_SECRET`、`RESEND_API_KEY`。
+
+## 3. 迁移并部署
+
+```bash
+bun run db:migrate:remote
+bun run deploy
+```
+
+## 4. 绑定域名
+
+在 `wrangler.jsonc` 里取消 `routes` 那一行的注释，填上你的域名（域名必须在同一个 Cloudflare 账号下），然后重新部署。接着：
+
+- 把 `src/config/app-config.ts` 里的 `url` 改成同一个地址。
+- 在 Google 和 GitHub 的 OAuth 应用里，添加 `https://your-domain.com/api/auth/callback/google`（以及 `/github`）作为回调地址。
+- 在 Resend 里验证发信域名，并设置 `app-config.ts` 里的 `emailFrom`。
+
+## 后续更新
+
+以后每次更新：有新迁移时先跑 `bun run db:migrate:remote`，然后 `bun run deploy`。

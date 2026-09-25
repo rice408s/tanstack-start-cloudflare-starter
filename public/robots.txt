@@ -1,0 +1,5 @@
+# App, auth and API routes carry no indexable content (pages also send
+# a noindex meta). The Disallow and Sitemap lines are written at build time
+# from src/config/private-paths.ts (the same list as the prerender filter)
+# — see scripts/generate-sitemap.ts. Dev serves this header only.
+User-agent: *

@@ -1,0 +1,55 @@
+---
+title: Deploy
+description: Put the app on Cloudflare Workers — create D1 and R2, push secrets, migrate, deploy, attach a domain.
+group: start
+order: 2
+---
+
+The whole app is one Cloudflare Worker: it serves the prerendered marketing
+pages as static assets and everything else from the Worker. With Claude Code,
+the `/deploy` skill runs these steps for you.
+
+## 1. Log in and create the resources
+
+```bash
+bunx wrangler login
+bunx wrangler d1 create my-app            # paste the printed id into wrangler.jsonc → database_id
+bunx wrangler r2 bucket create my-app-files
+```
+
+Rename `my-app` in `wrangler.jsonc` (the Worker `name`, `database_name`,
+`bucket_name`) first if you want different names.
+
+## 2. Push secrets
+
+Production secrets never go in a committed file:
+
+```bash
+bunx wrangler secret put BETTER_AUTH_SECRET   # a NEW random value, not your local one
+bunx wrangler secret put APP_URL              # https://your-domain.com
+```
+
+Add the optional ones the same way: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `RESEND_API_KEY`.
+
+## 3. Migrate and deploy
+
+```bash
+bun run db:migrate:remote
+bun run deploy
+```
+
+## 4. Attach a domain
+
+Uncomment the `routes` line in `wrangler.jsonc` with your hostname (the zone
+must be in the same Cloudflare account) and deploy again. Then:
+
+- Set `url` in `src/config/app-config.ts` to the same origin.
+- Add `https://your-domain.com/api/auth/callback/google` (and `/github`) as
+  redirect URIs in the Google and GitHub OAuth apps.
+- Verify your sending domain in Resend, and set `emailFrom` in `app-config.ts`.
+
+## Updating
+
+Every later release is `bun run db:migrate:remote` (when there is a new
+migration) followed by `bun run deploy`.

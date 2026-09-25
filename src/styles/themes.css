@@ -1,0 +1,502 @@
+/*
+ * THE ALTERNATE BUILT-IN LOOKS
+ * ============================
+ *
+ * `src/styles.css` holds ONE theme — the neutral+blue "shipkit" look the
+ * template ships with, written into `:root` and `.dark`. This file holds the
+ * other three. Each is a full visual style, not a recolour: palette, corner
+ * radius, border weight, surface texture and typeface all move together, so
+ * the same page reads as a different product.
+ *
+ * Two axes, kept apart:
+ *
+ *   THEME — `data-theme` on <html>, written by components/theme-provider.tsx.
+ *   MODE  — the `dark` class on <html>, written by next-themes.
+ *
+ * Every theme carries both faces: `:root[data-theme='x']` is its light
+ * ground, `:root[data-theme='x'].dark` its dark one. Nothing here is scoped
+ * to `shipkit` — that theme IS the `:root` block, so `data-theme="shipkit"`
+ * simply adds no overrides.
+ *
+ * Specificity: the selectors below are `:root[...]` (0,2,0) against
+ * styles.css's `:root` (0,1,0), so these win wherever they speak and the
+ * import order is irrelevant. The handful of STRUCTURAL rules at the bottom
+ * of each theme sit outside any @layer on purpose — that is what lets them
+ * beat a Tailwind utility baked into a component (`border`, `rounded-*`)
+ * without any component learning what a theme is.
+ *
+ * Adding one: add the id to `src/config/themes.ts`, add a light block, a
+ * dark block, and nothing else. A theme that needs a component to change
+ * shape needs a TOKEN for that shape, never a branch in the component.
+ *
+ * On colour: the shipkit palette's contrast ratios were verified by
+ * calculation (see styles.css). The themes below reuse its LIGHTNESS ladder
+ * — the same L values, different hue and chroma — so text/ground pairs land
+ * in the same place. Re-run the math if you move an L.
+ */
+
+/* ---------------------------------------------------------------------------
+ * Surface texture, token-driven.
+ *
+ * Both tokens default to `none` in styles.css, so for the shipkit look these
+ * rules render nothing at all and its "near-zero shadows" rule is untouched.
+ * They exist so a theme BUILT on shadow can have one without a single
+ * component gaining a shadow class.
+ * ------------------------------------------------------------------------ */
+[data-slot="card"],
+[data-slot="dialog-content"],
+[data-slot="sheet-content"],
+[data-slot="popover-content"],
+[data-slot="dropdown-menu-content"],
+[data-slot="select-content"] {
+  box-shadow: var(--shadow-surface);
+}
+
+[data-slot="button"][data-variant="default"],
+[data-slot="button"][data-variant="destructive"],
+[data-slot="button"][data-variant="outline"],
+[data-slot="button"][data-variant="secondary"] {
+  box-shadow: var(--shadow-raised);
+}
+
+/* ===========================================================================
+ * EDITORIAL — printed matter.
+ *
+ * Serif throughout, square corners, warm paper and a brick-red accent. The
+ * separation between planes is a RULE, not a lift: cards are outlined rather
+ * than raised, which is how a magazine spread separates a sidebar from the
+ * column. Body type is the platform serif stack (ui-serif -> Georgia, and a
+ * Songti fallback so Chinese does not drop to sans) — zero new font files;
+ * swap in a webfont here if you have one to self-host.
+ * ======================================================================== */
+:root[data-theme="editorial"] {
+  --background: oklch(0.975 0.009 85);
+  --foreground: oklch(0.2 0.012 60);
+  --card: oklch(0.99 0.006 85);
+  --card-foreground: oklch(0.2 0.012 60);
+  --popover: oklch(0.99 0.006 85);
+  --popover-foreground: oklch(0.2 0.012 60);
+  --primary: oklch(0.2 0.012 60);
+  --primary-foreground: oklch(0.98 0.008 85);
+  --secondary: oklch(0.93 0.012 85);
+  --secondary-foreground: oklch(0.2 0.012 60);
+  --muted: oklch(0.93 0.012 85);
+  --muted-foreground: oklch(0.46 0.014 60);
+  --placeholder: oklch(0.63 0.012 70);
+  --accent: oklch(0.93 0.012 85);
+  --accent-foreground: oklch(0.2 0.012 60);
+  --destructive: oklch(0.47 0.16 32);
+  --destructive-foreground: oklch(0.98 0.008 85);
+  --border: oklch(0.8 0.014 80);
+  --input: oklch(0.8 0.014 80);
+  --ring: oklch(0.47 0.15 32);
+  --brand: oklch(0.47 0.15 32);
+  --brand-foreground: oklch(0.98 0.008 85);
+  --surface: oklch(0.955 0.011 85);
+  --success: oklch(0.47 0.1 145);
+  --success-foreground: oklch(0.98 0.008 85);
+  --warning: oklch(0.5 0.105 70);
+  --warning-foreground: oklch(0.98 0.008 85);
+  --danger: oklch(0.47 0.16 32);
+  --danger-foreground: oklch(0.98 0.008 85);
+  --hero-dot: oklch(0.85 0.014 85);
+  --band: oklch(0.945 0.014 85);
+  --band-foreground: oklch(0.2 0.012 60);
+  --band-muted: oklch(0.46 0.014 60);
+  --terminal: oklch(0.22 0.012 60);
+  --terminal-foreground: oklch(0.93 0.008 85);
+  --terminal-muted: oklch(0.7 0.01 70);
+  --terminal-line: oklch(0.42 0.012 60);
+  --chart-1: oklch(0.47 0.15 32);
+  --chart-2: oklch(0.5 0.1 145);
+  --chart-3: oklch(0.58 0.11 70);
+  --chart-4: oklch(0.45 0.12 250);
+  --chart-5: oklch(0.48 0.13 320);
+  --sidebar: oklch(0.955 0.011 85);
+  --sidebar-foreground: oklch(0.2 0.012 60);
+  --sidebar-primary: oklch(0.2 0.012 60);
+  --sidebar-primary-foreground: oklch(0.98 0.008 85);
+  --sidebar-accent: oklch(0.93 0.012 85);
+  --sidebar-accent-foreground: oklch(0.2 0.012 60);
+  --sidebar-border: oklch(0.8 0.014 80);
+  --sidebar-ring: oklch(0.47 0.15 32);
+
+  /* Shape: print has no rounded corners. The button keeps 2px so it still
+     reads as a control rather than as a block of colour. */
+  --radius: 0rem;
+  --radius-btn: 0.125rem;
+  --radius-card: 0rem;
+  --radius-sheet: 0rem;
+  --shadow-surface: none;
+  --shadow-raised: none;
+  --font-body:
+    ui-serif, Georgia, Cambria, "Songti SC", "Noto Serif CJK SC",
+    "Times New Roman", serif;
+  --font-display:
+    ui-serif, Georgia, Cambria, "Songti SC", "Times New Roman", serif;
+}
+
+:root[data-theme="editorial"].dark {
+  --background: oklch(0.17 0.02 60);
+  --foreground: oklch(0.945 0.008 85);
+  --card: oklch(0.21 0.022 60);
+  --card-foreground: oklch(0.945 0.008 85);
+  --popover: oklch(0.21 0.022 60);
+  --popover-foreground: oklch(0.945 0.008 85);
+  --primary: oklch(0.945 0.008 85);
+  --primary-foreground: oklch(0.17 0.01 60);
+  --secondary: oklch(0.28 0.024 60);
+  --secondary-foreground: oklch(0.945 0.008 85);
+  --muted: oklch(0.28 0.024 60);
+  --muted-foreground: oklch(0.72 0.01 75);
+  --placeholder: oklch(0.53 0.012 70);
+  --accent: oklch(0.31 0.026 60);
+  --accent-foreground: oklch(0.945 0.008 85);
+  --destructive: oklch(0.55 0.17 32);
+  --destructive-foreground: oklch(0.99 0.006 85);
+  --border: oklch(0.34 0.024 60);
+  --input: oklch(0.34 0.024 60);
+  --ring: oklch(0.55 0.16 32);
+  --brand: oklch(0.55 0.16 32);
+  --brand-foreground: oklch(0.99 0.006 85);
+  --surface: oklch(0.235 0.022 60);
+  --success: oklch(0.5 0.11 145);
+  --success-foreground: oklch(0.99 0.006 85);
+  --warning: oklch(0.52 0.105 70);
+  --warning-foreground: oklch(0.99 0.006 85);
+  --danger: oklch(0.55 0.17 32);
+  --danger-foreground: oklch(0.99 0.006 85);
+  --hero-dot: oklch(0.31 0.012 60);
+  --band: oklch(0.235 0.012 70);
+  --band-foreground: oklch(0.945 0.008 85);
+  --band-muted: oklch(0.72 0.01 75);
+  --terminal: oklch(0.29 0.012 60);
+  --terminal-foreground: oklch(0.92 0.008 85);
+  --terminal-muted: oklch(0.7 0.01 75);
+  --terminal-line: oklch(0.47 0.012 60);
+  --chart-1: oklch(0.63 0.15 32);
+  --chart-2: oklch(0.63 0.11 145);
+  --chart-3: oklch(0.71 0.12 70);
+  --chart-4: oklch(0.6 0.13 250);
+  --chart-5: oklch(0.6 0.14 320);
+  --sidebar: oklch(0.21 0.022 60);
+  --sidebar-foreground: oklch(0.945 0.008 85);
+  --sidebar-primary: oklch(0.945 0.008 85);
+  --sidebar-primary-foreground: oklch(0.17 0.01 60);
+  --sidebar-accent: oklch(0.31 0.026 60);
+  --sidebar-accent-foreground: oklch(0.945 0.008 85);
+  --sidebar-border: oklch(0.34 0.024 60);
+  --sidebar-ring: oklch(0.55 0.16 32);
+}
+
+/* A card here is OUTLINED, not lifted — the rule is the whole separation.
+   Unlayered so it beats the `bg-card` card's lack of a border utility. */
+:root[data-theme="editorial"] [data-slot="card"] {
+  border: 1px solid var(--border);
+}
+
+/* Headlines in a serif want the tracking back to normal; the shipkit display
+   face is drawn tight (-0.03em) and a Georgia at -0.03em looks cramped. */
+:root[data-theme="editorial"] .display-sans {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* ===========================================================================
+ * SOFT — rounded and friendly.
+ *
+ * Lilac-tinted ground, pure-white cards floating on a real (if quiet) drop
+ * shadow, generous corners, and a violet that is the DEFAULT button rather
+ * than a reserved accent — the one theme where the primary action is
+ * coloured. Headlines take Comfortaa, the rounded face already self-hosted
+ * for the wordmark.
+ * ======================================================================== */
+:root[data-theme="soft"] {
+  --background: oklch(0.98 0.012 300);
+  --foreground: oklch(0.24 0.02 300);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.02 300);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.02 300);
+  --primary: oklch(0.53 0.18 295);
+  --primary-foreground: oklch(0.99 0.004 300);
+  --secondary: oklch(0.94 0.016 300);
+  --secondary-foreground: oklch(0.24 0.02 300);
+  --muted: oklch(0.94 0.016 300);
+  --muted-foreground: oklch(0.5 0.022 300);
+  --placeholder: oklch(0.65 0.018 300);
+  --accent: oklch(0.94 0.016 300);
+  --accent-foreground: oklch(0.24 0.02 300);
+  --destructive: oklch(0.53 0.19 20);
+  --destructive-foreground: oklch(0.99 0.004 300);
+  --border: oklch(0.905 0.014 300);
+  --input: oklch(0.905 0.014 300);
+  --ring: oklch(0.53 0.18 295);
+  --brand: oklch(0.53 0.18 295);
+  --brand-foreground: oklch(0.99 0.004 300);
+  --surface: oklch(0.96 0.014 300);
+  --success: oklch(0.52 0.125 165);
+  --success-foreground: oklch(0.99 0.004 300);
+  --warning: oklch(0.53 0.105 60);
+  --warning-foreground: oklch(0.99 0.004 300);
+  --danger: oklch(0.53 0.19 20);
+  --danger-foreground: oklch(0.99 0.004 300);
+  --hero-dot: oklch(0.885 0.018 300);
+  --band: oklch(0.965 0.016 300);
+  --band-foreground: oklch(0.24 0.02 300);
+  --band-muted: oklch(0.5 0.022 300);
+  --terminal: oklch(0.26 0.03 300);
+  --terminal-foreground: oklch(0.93 0.01 300);
+  --terminal-muted: oklch(0.72 0.015 300);
+  --terminal-line: oklch(0.44 0.03 300);
+  --chart-1: oklch(0.53 0.18 295);
+  --chart-2: oklch(0.55 0.13 200);
+  --chart-3: oklch(0.56 0.14 340);
+  --chart-4: oklch(0.55 0.12 165);
+  --chart-5: oklch(0.58 0.11 60);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.24 0.02 300);
+  --sidebar-primary: oklch(0.53 0.18 295);
+  --sidebar-primary-foreground: oklch(0.99 0.004 300);
+  --sidebar-accent: oklch(0.94 0.016 300);
+  --sidebar-accent-foreground: oklch(0.24 0.02 300);
+  --sidebar-border: oklch(0.905 0.014 300);
+  --sidebar-ring: oklch(0.53 0.18 295);
+
+  --radius: 0.875rem;
+  --radius-btn: 9999px;
+  --radius-card: 1.5rem;
+  --radius-sheet: 2rem;
+  /* Tinted rather than black: a neutral shadow over a lilac page reads as
+     dirt. Two stops — a contact line and a wide ambient — which is what
+     makes the card look placed rather than pasted. */
+  --shadow-surface:
+    0 1px 2px oklch(0.35 0.06 300 / 0.07),
+    0 10px 28px oklch(0.35 0.06 300 / 0.09);
+  --shadow-raised: 0 1px 2px oklch(0.35 0.06 300 / 0.14);
+  --font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Comfortaa", var(--font-body), sans-serif;
+}
+
+:root[data-theme="soft"].dark {
+  --background: oklch(0.19 0.032 300);
+  --foreground: oklch(0.96 0.006 300);
+  --card: oklch(0.235 0.034 300);
+  --card-foreground: oklch(0.96 0.006 300);
+  --popover: oklch(0.235 0.034 300);
+  --popover-foreground: oklch(0.96 0.006 300);
+  --primary: oklch(0.58 0.17 295);
+  --primary-foreground: oklch(0.99 0.004 300);
+  --secondary: oklch(0.3 0.038 300);
+  --secondary-foreground: oklch(0.96 0.006 300);
+  --muted: oklch(0.3 0.038 300);
+  --muted-foreground: oklch(0.73 0.014 300);
+  --placeholder: oklch(0.54 0.018 300);
+  --accent: oklch(0.33 0.04 300);
+  --accent-foreground: oklch(0.96 0.006 300);
+  --destructive: oklch(0.55 0.19 20);
+  --destructive-foreground: oklch(0.99 0.004 300);
+  --border: oklch(0.35 0.038 300);
+  --input: oklch(0.35 0.038 300);
+  --ring: oklch(0.58 0.17 295);
+  --brand: oklch(0.58 0.17 295);
+  --brand-foreground: oklch(0.99 0.004 300);
+  --surface: oklch(0.26 0.035 300);
+  --success: oklch(0.51 0.125 165);
+  --success-foreground: oklch(0.99 0.004 300);
+  --warning: oklch(0.52 0.105 60);
+  --warning-foreground: oklch(0.99 0.004 300);
+  --danger: oklch(0.55 0.19 20);
+  --danger-foreground: oklch(0.99 0.004 300);
+  --hero-dot: oklch(0.33 0.04 300);
+  --band: oklch(0.26 0.038 300);
+  --band-foreground: oklch(0.96 0.006 300);
+  --band-muted: oklch(0.73 0.014 300);
+  --terminal: oklch(0.3 0.024 300);
+  --terminal-foreground: oklch(0.93 0.01 300);
+  --terminal-muted: oklch(0.72 0.015 300);
+  --terminal-line: oklch(0.48 0.024 300);
+  --chart-1: oklch(0.65 0.17 295);
+  --chart-2: oklch(0.66 0.13 200);
+  --chart-3: oklch(0.66 0.14 340);
+  --chart-4: oklch(0.65 0.12 165);
+  --chart-5: oklch(0.72 0.11 60);
+  --sidebar: oklch(0.235 0.034 300);
+  --sidebar-foreground: oklch(0.96 0.006 300);
+  --sidebar-primary: oklch(0.58 0.17 295);
+  --sidebar-primary-foreground: oklch(0.99 0.004 300);
+  --sidebar-accent: oklch(0.33 0.04 300);
+  --sidebar-accent-foreground: oklch(0.96 0.006 300);
+  --sidebar-border: oklch(0.35 0.038 300);
+  --sidebar-ring: oklch(0.58 0.17 295);
+
+  /* On a dark ground a light shadow is invisible and a dark one is the only
+     thing that still separates planes — keep it, blacker and deeper. */
+  --shadow-surface:
+    0 1px 2px oklch(0 0 0 / 0.4), 0 12px 32px oklch(0 0 0 / 0.45);
+  --shadow-raised: 0 1px 2px oklch(0 0 0 / 0.5);
+}
+
+/* Comfortaa ships here at weight 700 only (it is the wordmark's face); the
+   display rule asks for 500, which the browser would synthesize into mush. */
+:root[data-theme="soft"] .display-sans {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ===========================================================================
+ * BRUTAL — ink, rules and one loud yellow.
+ *
+ * Monospace everywhere, zero radius, 2px black borders and a hard offset
+ * shadow with no blur: the plane is separated by DISPLACEMENT rather than by
+ * light. The brand is a yellow that carries BLACK text — which is why
+ * --brand-foreground has always been a token and not a hardcoded near-white.
+ * The landing band is that yellow at full bleed.
+ * ======================================================================== */
+:root[data-theme="brutal"] {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.12 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.12 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.12 0 0);
+  --primary: oklch(0.12 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0 0);
+  --secondary-foreground: oklch(0.12 0 0);
+  --muted: oklch(0.95 0 0);
+  --muted-foreground: oklch(0.42 0 0);
+  --placeholder: oklch(0.6 0 0);
+  --accent: oklch(0.86 0.17 95);
+  --accent-foreground: oklch(0.12 0 0);
+  --destructive: oklch(0.5 0.21 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.12 0 0);
+  --input: oklch(0.12 0 0);
+  --ring: oklch(0.12 0 0);
+  --brand: oklch(0.86 0.17 95);
+  --brand-foreground: oklch(0.12 0 0);
+  --surface: oklch(0.96 0 0);
+  --success: oklch(0.5 0.14 145);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.86 0.17 95);
+  --warning-foreground: oklch(0.12 0 0);
+  --danger: oklch(0.5 0.21 25);
+  --danger-foreground: oklch(1 0 0);
+  --hero-dot: oklch(0.82 0 0);
+  --band: oklch(0.86 0.17 95);
+  --band-foreground: oklch(0.12 0 0);
+  --band-muted: oklch(0.34 0.06 95);
+  --terminal: oklch(0.12 0 0);
+  --terminal-foreground: oklch(0.95 0 0);
+  --terminal-muted: oklch(0.72 0 0);
+  --terminal-line: oklch(0.45 0 0);
+  --chart-1: oklch(0.86 0.17 95);
+  --chart-2: oklch(0.12 0 0);
+  --chart-3: oklch(0.5 0.21 25);
+  --chart-4: oklch(0.5 0.16 250);
+  --chart-5: oklch(0.55 0.15 150);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.12 0 0);
+  --sidebar-primary: oklch(0.12 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.86 0.17 95);
+  --sidebar-accent-foreground: oklch(0.12 0 0);
+  --sidebar-border: oklch(0.12 0 0);
+  --sidebar-ring: oklch(0.12 0 0);
+
+  --radius: 0rem;
+  --radius-btn: 0rem;
+  --radius-card: 0rem;
+  --radius-sheet: 0rem;
+  /* No blur on purpose: a hard-edged offset is a second copy of the shape,
+     which is the whole idiom. It draws in --foreground, so it inverts with
+     the mode for free. */
+  --shadow-surface: 5px 5px 0 0 var(--foreground);
+  --shadow-raised: 3px 3px 0 0 var(--foreground);
+  --font-body:
+    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-display:
+    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+:root[data-theme="brutal"].dark {
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.16 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.16 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.24 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.24 0 0);
+  --muted-foreground: oklch(0.73 0 0);
+  --placeholder: oklch(0.52 0 0);
+  --accent: oklch(0.84 0.17 95);
+  --accent-foreground: oklch(0.12 0 0);
+  --destructive: oklch(0.55 0.21 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.97 0 0);
+  --input: oklch(0.97 0 0);
+  --ring: oklch(0.97 0 0);
+  --brand: oklch(0.84 0.17 95);
+  --brand-foreground: oklch(0.12 0 0);
+  --surface: oklch(0.18 0 0);
+  --success: oklch(0.55 0.14 145);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.84 0.17 95);
+  --warning-foreground: oklch(0.12 0 0);
+  --danger: oklch(0.55 0.21 25);
+  --danger-foreground: oklch(1 0 0);
+  --hero-dot: oklch(0.3 0 0);
+  --band: oklch(0.84 0.17 95);
+  --band-foreground: oklch(0.12 0 0);
+  --band-muted: oklch(0.34 0.06 95);
+  --terminal: oklch(0.2 0 0);
+  --terminal-foreground: oklch(0.95 0 0);
+  --terminal-muted: oklch(0.72 0 0);
+  --terminal-line: oklch(0.5 0 0);
+  --chart-1: oklch(0.84 0.17 95);
+  --chart-2: oklch(0.97 0 0);
+  --chart-3: oklch(0.6 0.21 25);
+  --chart-4: oklch(0.6 0.16 250);
+  --chart-5: oklch(0.63 0.15 150);
+  --sidebar: oklch(0.16 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.97 0 0);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.84 0.17 95);
+  --sidebar-accent-foreground: oklch(0.12 0 0);
+  --sidebar-border: oklch(0.97 0 0);
+  --sidebar-ring: oklch(0.97 0 0);
+}
+
+/* The 2px rule. Unlayered, so it overrides the 1px `border` utility baked
+   into the primitives — every bordered control at once, no component edits.
+   The card has no border utility at all, so it gets the shorthand. */
+:root[data-theme="brutal"] [data-slot="card"] {
+  border: 2px solid var(--border);
+}
+
+:root[data-theme="brutal"] [data-slot="input"],
+:root[data-theme="brutal"] [data-slot="textarea"],
+:root[data-theme="brutal"] [data-slot="select-trigger"],
+:root[data-theme="brutal"] [data-slot="dialog-content"],
+:root[data-theme="brutal"] [data-slot="sheet-content"],
+:root[data-theme="brutal"] [data-slot="popover-content"],
+:root[data-theme="brutal"] [data-slot="dropdown-menu-content"],
+:root[data-theme="brutal"] [data-slot="select-content"],
+:root[data-theme="brutal"] [data-slot="button"][data-variant="outline"] {
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--border);
+}
+
+/* Monospace runs wide; the display tracking that suits a grotesk closes the
+   counters up here. */
+:root[data-theme="brutal"] .display-sans {
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}

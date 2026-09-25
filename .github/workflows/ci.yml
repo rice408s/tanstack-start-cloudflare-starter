@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  # Re-run a deploy by hand (gh workflow run CI) — e.g. after applying
+  # migrations that the pending-migrations guard refused to deploy over.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck · lint · test · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile
+      # .dev.vars is gitignored, and real keys never go into CI: the build,
+      # the prerender and the unit tests run on placeholders.
+      - name: Placeholder .dev.vars
+        run: |
+          cp .dev.vars.example .dev.vars
+          sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|; s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=ci-placeholder|; s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=ci-placeholder|" .dev.vars
+      - run: bun run cf-typegen
+      # Build first: the vite build generates src/paraglide/ (gitignored),
+      # which typecheck and the unit tests import.
+      - run: bun run build
+      - run: bun run typecheck
+      - run: bun run check
+      - run: bun run test
+      # drizzle/ carries its meta, so generating against an unchanged schema
+      # writes nothing. Anything it writes is a schema change that shipped
+      # without its migration.
+      - name: Schema and migrations agree
+        run: |
+          bun run db:generate
+          if [ -n "$(git status --porcelain drizzle)" ]; then
+            git status --porcelain drizzle
+            echo "::error::Schema changed without a migration. Run bun run db:generate and commit drizzle/."
+            exit 1
+          fi
+
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile
+      # e2e forges its sessions with this BETTER_AUTH_SECRET, so a random one
+      # works as well as the real one.
+      - name: Placeholder .dev.vars
+        run: |
+          cp .dev.vars.example .dev.vars
+          sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|; s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=ci-placeholder|; s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=ci-placeholder|" .dev.vars
+      - run: bun run cf-typegen
+      # Build first so src/paraglide/ exists before the dev server's
+      # dependency scan runs — without it vite skips pre-bundling and the app
+      # ends up with two React copies ("Cannot read properties of null
+      # (reading 'useEffect')"), which breaks SSR of the admin pages.
+      - run: bun run build
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Cloudflare Workers
+    needs: [check, e2e]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: bun install --frozen-lockfile
+      # The build prerenders with placeholders; the Worker reads its real
+      # keys from `wrangler secret put` at runtime.
+      - name: Placeholder .dev.vars
+        run: |
+          cp .dev.vars.example .dev.vars
+          sed -i "s|^BETTER_AUTH_SECRET=.*|BETTER_AUTH_SECRET=$(openssl rand -hex 32)|; s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=ci-placeholder|; s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=ci-placeholder|" .dev.vars
+      - run: bun run cf-typegen
+      # No token = no deploy. Set CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+      # in the repo's "production" environment secrets to turn this on
+      # (see /deploy skill). Runtime secrets are pushed with `wrangler secret
+      # put`, not from CI.
+      # Migrations are applied by hand (`bun run db:migrate:remote`), never
+      # from CI — a schema change is a deliberate, watched step. CI only
+      # refuses to ship code whose migrations haven't been applied yet.
+      - name: Refuse to deploy over unapplied D1 migrations
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: |
+          out=$(bunx wrangler d1 migrations list DB --remote 2>&1)
+          echo "$out"
+          if ! grep -q "No migrations to apply" <<<"$out"; then
+            echo "::error::Unapplied D1 migrations — run 'bun run db:migrate:remote' locally, then re-run this deploy."
+            exit 1
+          fi
+      - name: Deploy
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: bun run deploy
+      # Optional: only if you use infra/www-redirect to send www -> apex.
+      # Tiny and idempotent, so it just ships with every deploy rather than
+      # tracking whether infra/ changed. Delete this step if you don't.
+      # - name: Deploy www redirect
+      #   if: env.CLOUDFLARE_API_TOKEN != ''
+      #   run: bun run deploy:www
+      - name: Skipped
+        if: env.CLOUDFLARE_API_TOKEN == ''
+        run: echo "CLOUDFLARE_API_TOKEN not set — skipping deploy."
+

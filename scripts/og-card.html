@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Social card</title>
+<!--
+  Source for public/og.png (1200x630) — the image behind og:image and
+  twitter:image in src/routes/__root.tsx. Re-render after editing:
+
+    bun run og
+
+  It mirrors the landing hero on purpose, so the share card reads as the
+  same site rather than as a banner someone made separately: the dot grid
+  from .hero-dots, the Comfortaa wordmark, the Bricolage slogan face, the
+  page's own neutral ground.
+
+  Static on purpose. It cannot import appConfig or the Paraglide messages —
+  it is opened as a file:// page by a headless browser — so the name and the
+  two lines of copy are written here. Keep them in step with
+  `marketing_hero_title` / `marketing_hero_subtitle` when you rewrite the
+  hero, and bump the `v` on socialCard in __root.tsx so the crawlers refetch.
+
+  The tokens below are the shipkit theme's light palette, copied from
+  styles.css. The card does not follow the reader's theme — it is one fixed
+  image served to crawlers — so pick the look you want shared and leave it.
+-->
+<style>
+@font-face{font-family:'Bricolage Grotesque';src:url('../public/fonts/bricolage-grotesque-latin.woff2') format('woff2');font-weight:500;font-display:block}
+@font-face{font-family:Comfortaa;src:url('../public/fonts/comfortaa-bold-latin.woff2') format('woff2');font-weight:700;font-display:block}
+@font-face{font-family:Manrope;src:url('../public/fonts/manrope-latin.woff2') format('woff2');font-weight:200 800;font-display:block}
+
+:root{
+  --background:oklch(0.99 0 0);
+  --foreground:oklch(0.18 0 0);
+  --muted-foreground:oklch(0.5 0 0);
+  --hero-dot:oklch(0.88 0 0);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1200px;height:630px}
+body{
+  position:relative;isolation:isolate;overflow:hidden;
+  background:var(--background);color:var(--foreground);
+  font-family:Manrope,system-ui,sans-serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:0 80px;
+  -webkit-font-smoothing:antialiased;
+}
+/* .hero-dots — the same 24px grid and centre-weighted mask as the landing page */
+body::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background-image:radial-gradient(var(--hero-dot) 1px, transparent 1px);
+  background-size:24px 24px;
+  -webkit-mask-image:radial-gradient(ellipse 75% 62% at 50% 46%, #000 30%, transparent 100%);
+  mask-image:radial-gradient(ellipse 75% 62% at 50% 46%, #000 30%, transparent 100%);
+}
+.wordmark{
+  display:flex;align-items:center;gap:10px;
+  font-family:Comfortaa,sans-serif;font-weight:700;letter-spacing:-0.01em;
+  font-size:34px;margin-bottom:54px;
+}
+.wordmark img{width:38px;height:38px;object-fit:contain}
+h1{
+  font-family:'Bricolage Grotesque',Manrope,sans-serif;
+  font-optical-sizing:auto;font-weight:500;letter-spacing:-0.03em;
+  font-size:86px;line-height:0.95;
+}
+.sub{
+  font-size:27px;font-weight:400;line-height:1.45;
+  color:var(--muted-foreground);margin-top:38px;
+}
+</style>
+<div class="wordmark"><img src="../public/logo64.png" alt="">ShipKit</div>
+<h1>Hand it to your agent.<br>Live in an hour.</h1>
+<div class="sub">Auth, payments, credits and an admin console, already wired.</div>

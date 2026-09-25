@@ -1,0 +1,14 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // www.<domain> -> <domain>, as its own Worker: the main Worker serves
+  // prerendered pages from the asset layer, whose _redirects can't target
+  // another host, so www gets a script that does nothing but redirect.
+  //
+  // OPTIONAL — a Cloudflare redirect rule does the same thing for free on
+  // most plans. Use this only if you can't add one. Fill in your hostname
+  // below, then: bun run deploy:www
+  "name": "shipkit-www",
+  "compatibility_date": "2025-09-02",
+  "main": "index.ts",
+  "routes": [{ "pattern": "www.example.com", "custom_domain": true }]
+}
